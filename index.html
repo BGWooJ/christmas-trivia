@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Festive Flicks Trivia</title>
+    <style>
+        /* --- CSS STYLES --- */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-color: #ffffff;
+            --accent-green: #2ecc71;
+            --accent-red: #e74c3c;
+            --accent-gold: #f1c40f;
+            --timer-bg: rgba(255, 255, 255, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            overflow: hidden;
+            color: var(--text-color);
+        }
+
+        .snowflake {
+            position: absolute;
+            top: -10px;
+            color: white;
+            font-size: 1em;
+            opacity: 0.8;
+            animation: fall linear infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(105vh); }
+        }
+
+        .glass-container {
+            width: 90%;
+            max-width: 600px;
+            min-height: 500px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        input[type="text"] {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            font-size: 1.1rem;
+            width: 80%;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        input::placeholder { color: rgba(255,255,255,0.6); }
+        input:focus { outline: none; border-color: var(--accent-gold); }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+        }
+
+        .hidden { display: none !important; }
+
+        .timer-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--timer-bg);
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .timer-fill {
+            height: 100%;
+            background: var(--accent-gold);
+            width: 100%;
+            transition: width 0.1s linear;
+        }
+
+        .hud {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-bottom: 10px;
+        }
+
+        .question-card h2 {
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            padding: 15px;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+        .option-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.02);
+        }
+
+        .feedback-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+            z-index: 20;
+        }
+        .feedback-emoji { font-size: 3rem; margin-bottom: 10px; }
+        .feedback-text { font-size: 1.2rem; margin-bottom: 20px; color: #ddd; }
+
+        .leaderboard-list {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+            text-align: left;
+            margin-top: 1rem;
+        }
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9rem;
+        }
+        .leaderboard-item.highlight {
+            background: rgba(241, 196, 15, 0.2);
+            border-radius: 8px;
+            border-bottom: none;
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @media (max-width: 500px) {
+            .options-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="snow-container"></div>
+
+    <div class="glass-container">
+        <div id="start-screen">
+            <h1>✨ Festive Flicks ✨</h1>
+            <p style="margin-bottom: 20px; opacity: 0.8;">Test your holiday movie knowledge!</p>
+            <input type="text" id="username" placeholder="Enter your name..." maxlength="12">
+            <button class="btn-primary" onclick="startQuiz()">Start Quiz</button>
+        </div>
+
+        <div id="quiz-screen" class="hidden">
+            <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
+            <div class="hud">
+                <span id="question-count">Q: 1/5</span>
+                <span id="score-display">Score: 0</span>
+            </div>
+            <div class="question-card">
+                <h2 id="question-text">Question goes here...</h2>
+                <div class="options-grid" id="options-container"></div>
+            </div>
+        </div>
+
+        <div id="feedback-screen" class="hidden feedback-overlay">
+            <div class="feedback-emoji" id="feedback-emoji">🎅</div>
+            <h2 id="feedback-title">Correct!</h2>
+            <p class="feedback-text" id="feedback-msg">Well done.</p>
+        </div>
+
+        <div id="end-screen" class="hidden">
+            <h1>Quiz Complete!</h1>
+            <h2 id="final-score">0 Pts</h2>
+            <div style="width: 100%; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; margin-top: 20px;">
+                <h3 style="margin: 0 0 10px 0; color: var(--accent-gold);">🏆 Top Elves</h3>
+                <ul class="leaderboard-list" id="leaderboard-list"></ul>
+            </div>
+            <button class="btn-primary" onclick="location.reload()" style="margin-top: 20px;">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        /* --- JAVASCRIPT LOGIC --- */
+        const TIME_PER_QUESTION = 5;
+        const questions = [
+            { q: "In 'Home Alone', what is the name of the 'filthy animal' movie Kevin watches?", options: ["Angels with Dirty Faces", "Angels with Filthy Souls", "Thieves in the Night", "The Wet Bandits"], correct: 1, wrongMsg: "Keep the change, ya filthy animal! (It was Angels with Filthy Souls)" },
+            { q: "What is the name of the skyscraper in 'Die Hard'?", options: ["Empire State", "Nakatomi Plaza", "Stark Tower", "Wayne Enterprises"], correct: 1, wrongMsg: "Yippee-ki-yay! You missed it. It's Nakatomi Plaza." },
+            { q: "In 'Elf', what is the first rule of The Code of Elves?", options: ["Treat every day like Christmas", "Room for everyone on Nice List", "Spread cheer singing loud", "Don't eat yellow snow"], correct: 0, wrongMsg: "You sit on a throne of lies! It's 'Treat every day like Christmas'." },
+            { q: "Which department store features prominently in 'Miracle on 34th Street'?", options: ["Gimbels", "Macy's", "Bloomingdale's", "Sears"], correct: 1, wrongMsg: "Wrong! The real Santa works at Macy's." },
+            { q: "What does Scott Calvin do for a living before becoming Santa?", options: ["Toy Maker", "Dentist", "Toy Salesman", "Advertising Executive"], correct: 3, wrongMsg: "Nope. He was an Ad Exec making the naughty list." }
+        ];
+
+        let currentQIndex = 0;
+        let score = 0;
+        let timeLeft = TIME_PER_QUESTION;
+        let timerInterval;
+        let userName = "Guest";
+
+        const screens = { start: document.getElementById('start-screen'), quiz: document.getElementById('quiz-screen'), feedback: document.getElementById('feedback-screen'), end: document.getElementById('end-screen') };
+        const els = { questionText: document.getElementById('question-text'), optionsContainer: document.getElementById('options-container'), timerFill: document.getElementById('timer-fill'), scoreDisplay: document.getElementById('score-display'), qCount: document.getElementById('question-count'), feedbackEmoji: document.getElementById('feedback-emoji'), feedbackTitle: document.getElementById('feedback-title'), feedbackMsg: document.getElementById('feedback-msg'), finalScore: document.getElementById('final-score'), leaderboardList: document.getElementById('leaderboard-list'), usernameInput: document.getElementById('username') };
+
+        function startQuiz() {
+            const inputName = els.usernameInput.value.trim();
+            if(inputName) userName = inputName;
+            screens.start.classList.add('hidden');
+            screens.quiz.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentQIndex >= questions.length) { endQuiz(); return; }
+            const q = questions[currentQIndex];
+            els.questionText.textContent = q.q;
+            els.qCount.textContent = `Q: ${currentQIndex + 1}/${questions.length}`;
+            els.optionsContainer.innerHTML = '';
+            const correctOptionString = q.options[q.correct];
+            q.options.forEach((opt) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = opt;
+                btn.onclick = () => handleAnswer(opt === correctOptionString);
+                els.optionsContainer.appendChild(btn);
+            });
+            startTimer();
+        }
+
+        function startTimer() {
+            timeLeft = TIME_PER_QUESTION;
+            updateTimerVisual();
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft -= 0.1;
+                updateTimerVisual();
+                if (timeLeft <= 0) { clearInterval(timerInterval); handleAnswer(false, true); }
+            }, 100);
+        }
+
+        function updateTimerVisual() {
+            const percentage = (timeLeft / TIME_PER_QUESTION) * 100;
+            els.timerFill.style.width = `${percentage}%`;
+            if (percentage < 30) els.timerFill.style.backgroundColor = '#e74c3c';
+            else els.timerFill.style.backgroundColor = '#f1c40f';
+        }
+
+        function handleAnswer(isCorrect, isTimeout = false) {
+            clearInterval(timerInterval);
+            screens.feedback.classList.remove('hidden');
+            if (isCorrect) {
+                score += Math.ceil(timeLeft * 10) + 50;
+                els.scoreDisplay.textContent = `Score: ${score}`;
+                els.feedbackEmoji.textContent = "🎉";
+                els.feedbackTitle.textContent = "Correct!";
+                els.feedbackTitle.style.color = "#2ecc71";
+                els.feedbackMsg.textContent = "Great job!";
+            } else {
+                els.feedbackEmoji.textContent = "❄️";
+                els.feedbackTitle.textContent = isTimeout ? "Time's Up!" : "Oh no!";
+                els.feedbackTitle.style.color = "#e74c3c";
+                els.feedbackMsg.textContent = questions[currentQIndex].wrongMsg;
+            }
+            setTimeout(() => {
+                screens.feedback.classList.add('hidden');
+                currentQIndex++;
+                loadQuestion();
+            }, 2500);
+        }
+
+        function endQuiz() {
+            screens.quiz.classList.add('hidden');
+            screens.end.classList.remove('hidden');
+            els.finalScore.textContent = `${score} Pts`;
+            generateLeaderboard();
+        }
+
+        function generateLeaderboard() {
+            let board = [{ name: "SantaClaus", score: 850 }, { name: "BuddyElf", score: 720 }, { name: "Grinch", score: 300 }, { name: userName, score: score }];
+            board.sort((a, b) => b.score - a.score);
+            els.leaderboardList.innerHTML = '';
+            board.forEach((player, index) => {
+                const li = document.createElement('li');
+                li.className = 'leaderboard-item';
+                if (player.name === userName) li.classList.add('highlight');
+                li.innerHTML = `<span>${index + 1}. ${player.name}</span><span>${player.score}</span>`;
+                els.leaderboardList.appendChild(li);
+            });
+        }
+
+        function createSnow() {
+            const container = document.getElementById('snow-container');
+            for (let i = 0; i < 50; i++) {
+                const flake = document.createElement('div');
+                flake.className = 'snowflake';
+                flake.textContent = '❄';
+                flake.style.left = Math.random() * 100 + 'vw';
+                flake.style.animationDuration = Math.random() * 3 + 2 + 's';
+                flake.style.opacity = Math.random();
+                flake.style.fontSize = Math.random() * 10 + 10 + 'px';
+                container.appendChild(flake);
+            }
+        }
+        createSnow();
+    </script>
+</body>
+</html>
